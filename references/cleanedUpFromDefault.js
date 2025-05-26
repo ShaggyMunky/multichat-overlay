@@ -5,7 +5,7 @@
 const urlParams = new URLSearchParams(window.location.search);
 
 const sbServerAddress = urlParams.get("address") || "127.0.0.1";
-const sbServerPort = urlParams.get("port") || "8081";
+const sbServerPort = urlParams.get("port") || "8080";
 const avatarMap = new Map();
 const pronounMap = new Map();
 
@@ -14,48 +14,47 @@ const pronounMap = new Map();
 /////////////
 const paramConfig = {
   showPlatform: { type: "bool", default: true },
-  showAvatar: { type: "bool", default: false },
-  showTimestamps: { type: "bool", default: false },
+  showAvatar: { type: "bool", default: true },
+  showTimestamps: { type: "bool", default: true },
   showBadges: { type: "bool", default: true },
-  showPronouns: { type: "bool", default: false },
+  showPronouns: { type: "bool", default: true },
   showUsername: { type: "bool", default: true },
   showMessage: { type: "bool", default: true },
   font: { type: "string", default: "" },
-  fontSize: { type: "string", default: "22" },
+  fontSize: { type: "string", default: "30" },
   lineSpacing: { type: "string", default: "1.7" },
-  background: { type: "string", default: "#18182b" },
+  background: { type: "string", default: "#000000" },
   opacity: { type: "string", default: "0.85" },
-  useSharedBg: { type: "bool", default: false },
-  hideAfter: { type: "int", default: 30 },
+  hideAfter: { type: "int", default: 0 },
   excludeCommands: { type: "bool", default: true },
-  ignoreChatters: { type: "string", default: "StreamElements,Streamlabs" },
+  ignoreChatters: { type: "string", default: "" },
   scrollDirection: { type: "int", default: 1 },
   groupConsecutiveMessages: { type: "bool", default: false },
-  inlineChat: { type: "bool", default: true },
-  imageEmbedPermissionLevel: { type: "int", default: 30 },
+  inlineChat: { type: "bool", default: false },
+  imageEmbedPermissionLevel: { type: "int", default: 20 },
   showTwitchMessages: { type: "bool", default: true },
-  showTwitchAnnouncements: { type: "bool", default: false },
+  showTwitchAnnouncements: { type: "bool", default: true },
   showTwitchSubs: { type: "bool", default: true },
-  showTwitchChannelPointRedemptions: { type: "bool", default: false },
-  showTwitchRaids: { type: "bool", default: false },
+  showTwitchChannelPointRedemptions: { type: "bool", default: true },
+  showTwitchRaids: { type: "bool", default: true },
   showTwitchSharedChat: { type: "int", default: 2 },
   showYouTubeMessages: { type: "bool", default: true },
   showYouTubeSuperChats: { type: "bool", default: true },
   showYouTubeSuperStickers: { type: "bool", default: true },
   showYouTubeMemberships: { type: "bool", default: true },
-  showStreamlabsDonations: { type: "bool", default: false },
+  showStreamlabsDonations: { type: "bool", default: true },
   showStreamElementsTips: { type: "bool", default: true },
-  showPatreonMemberships: { type: "bool", default: false },
-  showKofiDonations: { type: "bool", default: false },
-  showTipeeeStreamDonations: { type: "bool", default: false },
-  showFourthwallAlerts: { type: "bool", default: false },
+  showPatreonMemberships: { type: "bool", default: true },
+  showKofiDonations: { type: "bool", default: true },
+  showTipeeeStreamDonations: { type: "bool", default: true },
+  showFourthwallAlerts: { type: "bool", default: true },
   furryMode: { type: "bool", default: false },
   animationSpeed: { type: "int", default: 0.1 },
 };
 
 /*-- converting the multitude of variables into an object improves scalability and maintainability and allowing for dynamic access and easier autocompletion  --*/
 const options = GetOptions(paramConfig);
-console.log(options);
+
 // Set fonts for the widget
 document.body.style.fontFamily = options.font;
 document.body.style.fontSize = `${options.fontSize}px`;
@@ -66,12 +65,13 @@ document.documentElement.style.setProperty(
   `${options.lineSpacing}em`
 );
 
-// Set the background color for entire bounding box
-if (options.useSharedBg) {
-  SetBgAndOpacity(document.body);
-} else {
-  document.getElementById("mainContainer").classList.add("per-msg-bg");
+// Set the background color
+const opacity255 = Math.round(parseFloat(options.opacity) * 255);
+let hexOpacity = opacity255.toString(16);
+if (hexOpacity.length < 2) {
+  hexOpacity = "0" + hexOpacity;
 }
+document.body.style.background = `${options.background}${hexOpacity}`;
 
 // Get a list of chatters to ignore
 const ignoreUserList =
@@ -326,11 +326,6 @@ async function TwitchChatMessage(data) {
 
   const instance = CloneFromTemplate("messageTemplate");
   const elements = GetMessageInstanceElements(instance);
-
-  // puts background per message instead of a universsal box
-  if (!options.useSharedBg) {
-    SetBgAndOpacity(elements.messageContainer);
-  }
 
   // Set First Time Chatter
   if (data.message.firstMessage && options.showMessage) {
@@ -840,11 +835,6 @@ function YouTubeMessage(data) {
 
   const instance = CloneFromTemplate("messageTemplate");
   const elements = GetMessageInstanceElements(instance);
-
-  // puts background per message instead of a universsal box
-  if (!options.useSharedBg) {
-    SetBgAndOpacity(elements.messageContainer);
-  }
 
   // Set timestamp
   if (options.showTimestamps) {
@@ -1597,15 +1587,6 @@ function DecodeHTMLString(html) {
   return txt.value;
 }
 
-function SetBgAndOpacity(element) {
-  const opacity255 = Math.round(parseFloat(options.opacity) * 255);
-  let hexOpacity = opacity255.toString(16);
-  if (hexOpacity.length < 2) {
-    hexOpacity = "0" + hexOpacity;
-  }
-  element.style.background = `${options.background}${hexOpacity}`;
-}
-
 // I used Gemini for this shit so if it doesn't work, blame Google
 function FindFirstImageUrl(jsonObject) {
   if (typeof jsonObject !== "object" || jsonObject === null) {
@@ -1743,8 +1724,6 @@ function SetConnectionStatus(connected) {
     setTimeout(() => {
       statusContainer.style.transition = "all 2s ease";
       statusContainer.style.opacity = 0;
-      TwitchChatMessage(twitch_data);
-      YouTubeMessage(yt_message);
     }, 10);
   } else {
     statusContainer.style.background = "#D12025";
@@ -1753,124 +1732,3 @@ function SetConnectionStatus(connected) {
     statusContainer.style.opacity = 1;
   }
 }
-
-const twitch_data = {
-  message: {
-    internal: false,
-    msgId: "d9077e30-b9be-43ec-b123-d59942b10c87",
-    clientNonce: "2f853f4906779c41d125a8979023c146",
-    userId: "66760850",
-    username: "shaggymunky",
-    role: 4,
-    subscriber: false,
-    displayName: "ShaggyMunky",
-    color: "#1E90FF",
-    channel: "shaggymunky",
-    message: "hello",
-    isHighlighted: false,
-    isMe: false,
-    isCustomReward: false,
-    isAnonymous: false,
-    isReply: false,
-    bits: 0,
-    firstMessage: false,
-    returningChatter: false,
-    hasBits: false,
-    emotes: [],
-    cheerEmotes: [],
-    badges: [
-      {
-        name: "broadcaster",
-        version: "1",
-        imageUrl:
-          "https://static-cdn.jtvnw.net/badges/v1/5527c58c-fb7d-422d-b71b-f309dcb85cc1/3",
-        info: "",
-      },
-    ],
-    monthsSubscribed: 0,
-    isTest: false,
-    sharedChat: false,
-    sourceBadges: [],
-  },
-  user: {
-    role: 4,
-    badges: [
-      {
-        name: "broadcaster",
-        version: "1",
-        imageUrl:
-          "https://static-cdn.jtvnw.net/badges/v1/5527c58c-fb7d-422d-b71b-f309dcb85cc1/3",
-        info: "",
-      },
-    ],
-    color: "#1E90FF",
-    subscribed: false,
-    monthsSubscribed: 0,
-    id: "66760850",
-    login: "shaggymunky",
-    name: "ShaggyMunky",
-    type: "twitch",
-  },
-  messageId: "d9077e30-b9be-43ec-b123-d59942b10c87",
-  meta: {
-    internal: false,
-    clientNonce: "2f853f4906779c41d125a8979023c146",
-    firstMessage: false,
-    returningChatter: false,
-    isHighlighted: false,
-    isMe: false,
-    isCustomReward: false,
-    isTest: false,
-  },
-  anonymous: false,
-  text: "hello",
-  emotes: [],
-  parts: [
-    {
-      type: "text",
-      text: "hello",
-    },
-  ],
-  isReply: false,
-  isSharedChat: false,
-  isTest: false,
-};
-
-const yt_message = {
-  message: "how do you do",
-  emotes: [],
-  parts: [
-    {
-      text: "how do you do",
-    },
-  ],
-  broadcast: {
-    id: "YN8IQxwMxzk",
-    channelId: "UCcmrZjQ8c8WPZbz5vxbeHMw",
-    liveChatId: "KicKGFVDY21yWmpROGM4V1BaYno1dnhiZUhNdxILWU44SVF4d014ems",
-    title: "This is a test",
-    description: "",
-    categoryId: "24",
-    privacy: "public",
-    publishedAt: "2025-05-24T21:59:17Z",
-    scheduledStartTime: "2025-05-24T22:00:15Z",
-    scheduledEndTime: "2025-05-24T21:59:21.5611291Z",
-    actualStartTime: "2025-05-24T21:59:21.5611291Z",
-    actualEndTime: "2025-05-24T21:59:21.5611291Z",
-    tags: [],
-    status: "live",
-  },
-  eventId: "LCC.EhwKGkNOTDRvOGlOdlkwREZYRVpyUVlkSEVVaXlR",
-  user: {
-    id: "UCcmrZjQ8c8WPZbz5vxbeHMw",
-    url: "http://www.youtube.com/channel/UCcmrZjQ8c8WPZbz5vxbeHMw",
-    name: "ShaggyMunky",
-    profileImageUrl:
-      "https://yt3.ggpht.com/ytc/AIdro_kN0vHjIDhTA7B0t2l-8jw4du0Fp3Q4NWDxREtZ0wG6prM4O5dykKEJAxt14lhBl9HMMQ=s88-c-k-c0x00ffffff-no-rj",
-    isOwner: true,
-    isModerator: false,
-    isSponsor: false,
-    isVerified: false,
-  },
-  publishedAt: "2025-05-24T15:00:50.194369-07:00",
-};
