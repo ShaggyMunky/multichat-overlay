@@ -8,6 +8,7 @@ const sbServerAddress = urlParams.get("address") || "127.0.0.1";
 const sbServerPort = urlParams.get("port") || "8081";
 const avatarMap = new Map();
 const pronounMap = new Map();
+const ytMembers = {};
 
 /////////////
 // OPTIONS //
@@ -852,9 +853,11 @@ function YouTubeMessage(data) {
   }
 
   // Set the message data
+  // YouTube users do not have colors, the provided method
+  // randomly assigns one for that session
   if (options.showUsername) {
     elements.username.innerText = data.user.name;
-    elements.username.style.color = "#f70000"; // YouTube users do not have colors, so just set it to red
+    elements.username.style.color = GetYouTubeUserColor(data.user.id);
   }
 
   if (options.showMessage) {
@@ -1728,6 +1731,24 @@ function EscapeRegExp(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
 }
 
+function GetYouTubeUserColor(userId) {
+  if (!ytMembers[userId]) {
+    const colors = {
+      red: "#ff4c4c",
+      blue: "#4c6fff",
+      green: "#2e8b57",
+      purple: "#8a2be2",
+      orange: "#d2691e",
+      cyan: "#4cfff9",
+      pink: "#ff69b4",
+    };
+    const values = Object.values(colors);
+    const index = Math.floor(Math.random() * values.length);
+    ytMembers[userId] = values[index];
+  }
+  return ytMembers[userId];
+}
+
 ///////////////////////////////////
 // STREAMER.BOT WEBSOCKET STATUS //
 ///////////////////////////////////
@@ -1742,6 +1763,44 @@ function SetConnectionStatus(connected) {
     setTimeout(() => {
       statusContainer.style.transition = "all 2s ease";
       statusContainer.style.opacity = 0;
+      YouTubeMessage({
+        message: "how do you do",
+        emotes: [],
+        parts: [
+          {
+            text: "how do you do",
+          },
+        ],
+        broadcast: {
+          id: "YN8IQxwMxzk",
+          channelId: "UCcmrZjQ8c8WPZbz5vxbeHMw",
+          liveChatId: "KicKGFVDY21yWmpROGM4V1BaYno1dnhiZUhNdxILWU44SVF4d014ems",
+          title: "This is a test",
+          description: "",
+          categoryId: "24",
+          privacy: "public",
+          publishedAt: "2025-05-24T21:59:17Z",
+          scheduledStartTime: "2025-05-24T22:00:15Z",
+          scheduledEndTime: "2025-05-24T21:59:21.5611291Z",
+          actualStartTime: "2025-05-24T21:59:21.5611291Z",
+          actualEndTime: "2025-05-24T21:59:21.5611291Z",
+          tags: [],
+          status: "live",
+        },
+        eventId: "LCC.EhwKGkNOTDRvOGlOdlkwREZYRVpyUVlkSEVVaXlR",
+        user: {
+          id: "UCcmrZjQ8c8WPZbz5vxbeHMw",
+          url: "http://www.youtube.com/channel/UCcmrZjQ8c8WPZbz5vxbeHMw",
+          name: "ShaggyMunky",
+          profileImageUrl:
+            "https://yt3.ggpht.com/ytc/AIdro_kN0vHjIDhTA7B0t2l-8jw4du0Fp3Q4NWDxREtZ0wG6prM4O5dykKEJAxt14lhBl9HMMQ=s88-c-k-c0x00ffffff-no-rj",
+          isOwner: true,
+          isModerator: false,
+          isSponsor: false,
+          isVerified: false,
+        },
+        publishedAt: "2025-05-24T15:00:50.194369-07:00",
+      });
     }, 10);
   } else {
     statusContainer.style.background = "#D12025";
