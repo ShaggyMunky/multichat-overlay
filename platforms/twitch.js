@@ -5,83 +5,83 @@
 if (options.showTwitchMessages) {
   client.on("Twitch.ChatMessage", (response) => {
     console.debug(response.data);
-    TwitchChatMessage(response.data);
+    twitchChatMessage(response.data);
   });
 
   client.on("Twitch.Cheer", (response) => {
     console.debug(response.data);
-    TwitchChatMessage(response.data);
+    twitchChatMessage(response.data);
   });
 }
 
 client.on("Twitch.AutomaticRewardRedemption", (response) => {
   console.debug(response.data);
-  TwitchAutomaticRewardRedemption(response.data);
+  twitchAutomaticRewardRedemption(response.data);
 });
 
 if (options.showTwitchAnnouncements) {
   client.on("Twitch.Announcement", (response) => {
     console.debug(response.data);
-    TwitchAnnouncement(response.data);
+    twitchAnnouncement(response.data);
   });
 }
 
 if (options.showTwitchSubs) {
   client.on("Twitch.Sub", (response) => {
     console.debug(response.data);
-    TwitchSub(response.data);
+    twitchSub(response.data);
   });
 
   client.on("Twitch.ReSub", (response) => {
     console.debug(response.data);
-    TwitchResub(response.data);
+    twitchResub(response.data);
   });
 
   client.on("Twitch.GiftSub", (response) => {
     console.debug(response.data);
-    TwitchGiftSub(response.data);
+    twitchGiftSub(response.data);
   });
 }
 
 if (options.showTwitchChannelPointRedemptions) {
   client.on("Twitch.RewardRedemption", (response) => {
     console.debug(response.data);
-    TwitchRewardRedemption(response.data);
+    twitchRewardRedemption(response.data);
   });
 }
 
 if (options.showTwitchRaids) {
   client.on("Twitch.Raid", (response) => {
     console.debug(response.data);
-    TwitchRaid(response.data);
+    twitchRaid(response.data);
   });
 }
 
 client.on("Twitch.ChatMessageDeleted", (response) => {
   console.debug(response.data);
-  TwitchChatMessageDeleted(response.data);
+  twitchChatMessageDeleted(response.data);
 });
 
 client.on("Twitch.UserBanned", (response) => {
   console.debug(response.data);
-  TwitchUserBanned(response.data);
+  twitchUserBanned(response.data);
 });
 
 client.on("Twitch.UserTimedOut", (response) => {
   console.debug(response.data);
-  TwitchUserBanned(response.data);
+  twitchUserBanned(response.data);
 });
 
 client.on("Twitch.ChatCleared", (response) => {
   console.debug(response.data);
-  TwitchChatCleared(response.data);
+  twitchChatCleared(response.data);
 });
 
 ///////////////////////
 // MULTICHAT OVERLAY //
 ///////////////////////
 
-async function TwitchChatMessage(data) {
+async function twitchChatMessage(data) {
   // Don't post messages starting with "!"
   if (data.message.message.startsWith("!") && options.excludeCommands) return;
 
@@ -269,7 +269,7 @@ async function TwitchChatMessage(data) {
   }
 }
 
-async function TwitchAutomaticRewardRedemption(data) {
+async function twitchAutomaticRewardRedemption(data) {
   if (data.reward_type != "gigantify_an_emote") return;
 
   const instance = cloneFromTemplate("messageTemplate");
@@ -292,7 +292,7 @@ async function TwitchAutomaticRewardRedemption(data) {
   addMessageItem(instance, data.id);
 }
 
-async function TwitchAnnouncement(data) {
+async function twitchAnnouncement(data) {
   const instance = cloneFromTemplate("cardTemplate");
   const cardElements = getCardInstanceElements(instance);
 
@@ -381,7 +381,7 @@ async function TwitchAnnouncement(data) {
   addMessageItem(instance, data.messageId);
 }
 
-async function TwitchSub(data) {
+async function twitchSub(data) {
   const instance = cloneFromTemplate("cardTemplate");
   const elements = getCardInstanceElements(instance);
 
@@ -412,7 +412,7 @@ async function TwitchSub(data) {
   addMessageItem(instance, data.messageId);
 }
 
-async function TwitchResub(data) {
+async function twitchResub(data) {
   const instance = cloneFromTemplate("cardTemplate");
   const elements = getCardInstanceElements(instance);
 
@@ -447,7 +447,7 @@ async function TwitchResub(data) {
   addMessageItem(instance, data.messageId);
 }
 
-async function TwitchGiftSub(data) {
+async function twitchGiftSub(data) {
   const instance = cloneFromTemplate("cardTemplate");
   const elements = getCardInstanceElements(instance);
 
@@ -479,7 +479,7 @@ async function TwitchGiftSub(data) {
   addMessageItem(instance, data.messageId);
 }
 
-async function TwitchRewardRedemption(data) {
+async function twitchRewardRedemption(data) {
   const instance = cloneFromTemplate("cardTemplate");
   const elements = getCardInstanceElements(instance);
 
@@ -509,7 +509,7 @@ async function TwitchRewardRedemption(data) {
   addMessageItem(instance, data.messageId);
 }
 
-async function TwitchRaid(data) {
+async function twitchRaid(data) {
   const instance = cloneFromTemplate("cardTemplate");
   const elements = getCardInstanceElements(instance);
 
@@ -536,7 +536,7 @@ async function TwitchRaid(data) {
   addMessageItem(instance, data.messageId);
 }
 
-function TwitchChatMessageDeleted(data) {
+function twitchChatMessageDeleted(data) {
   const messageList = document.getElementById("messageList");
 
   // Maintain a list of chat messages to delete
@@ -562,7 +562,7 @@ function TwitchChatMessageDeleted(data) {
   });
 }
 
-function TwitchUserBanned(data) {
+function twitchUserBanned(data) {
   const messageList = document.getElementById("messageList");
 
   // Maintain a list of chat messages to delete
@@ -584,7 +584,7 @@ function TwitchUserBanned(data) {
   });
 }
 
-function TwitchChatCleared(data) {
+function twitchChatCleared(data) {
   const messageList = document.getElementById("messageList");
 
   while (messageList.firstChild) {
