@@ -1,0 +1,31 @@
+{
+  "name": "multichat-overlay",
+  "version": "1.0.0",
+  "description": "a multichat overlay combining twitch and youtube ",
+  "main": "script.js",
+  "type": "module",
+  "author": "",
+  "license": "GPL-3.0",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "typecheck": "tsc --noEmit",
+    "compile": "npm run typecheck && esbuild src/main.ts --bundle --outfile=dist/bundle.js",
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ShaggyMunky/multichat-overlay.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ShaggyMunky/multichat-overlay/issues"
+  },
+  "homepage": "https://github.com/ShaggyMunky/multichat-overlay#readme",
+  "dependencies": {
+    "@streamerbot/client": "^1.11.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "esbuild": "^0.25.5",
+    "typescript": "^5.4.5"
+  }
+}
