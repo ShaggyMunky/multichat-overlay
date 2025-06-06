@@ -1,9 +1,17 @@
+import {
+  CardInstance,
+  MessageInstance,
+  StickerInstance,
+} from "../types/templateTypes.js";
+
 export function cloneFromTemplate(name): DocumentFragment {
   const template = document.getElementById(name) as HTMLTemplateElement;
   return template.content.cloneNode(true) as DocumentFragment;
 }
 
-export function getMessageInstanceElements(instance: DocumentFragment) {
+export function getMessageInstanceElements(
+  instance: DocumentFragment
+): MessageInstance {
   return {
     messageContainer: instance.querySelector(
       "#messageContainer"
@@ -29,7 +37,9 @@ export function getMessageInstanceElements(instance: DocumentFragment) {
   };
 }
 
-export function getCardInstanceElements(instance: DocumentFragment) {
+export function getCardInstanceElements(
+  instance: DocumentFragment
+): CardInstance {
   return {
     card: instance.querySelector("#card") as HTMLElement,
     header: instance.querySelector("#header") as HTMLElement,
@@ -40,7 +50,9 @@ export function getCardInstanceElements(instance: DocumentFragment) {
   };
 }
 
-export function getStickerInstanceElements(instance: DocumentFragment) {
+export function getStickerInstanceElements(
+  instance: DocumentFragment
+): StickerInstance {
   return {
     sticker: instance.querySelector("#sticker") as HTMLElement,
     youtubeSuperSticker: instance.querySelector(

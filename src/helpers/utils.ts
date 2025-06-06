@@ -1,3 +1,5 @@
+import { PERMISSION_LEVELS, PLATFORMS } from "../config/constants.js";
+
 export function getCurrentTimeFormatted(): string {
   const now = new Date();
   let hours = now.getHours();
@@ -15,7 +17,7 @@ export function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
 }
 
-export function isImageUrl(url) {
+export function isImageUrl(url: string): boolean {
   try {
     const { pathname } = new URL(url);
     // Only check the pathname since query parameters are not included in it.
@@ -25,27 +27,27 @@ export function isImageUrl(url) {
   }
 }
 
-export function canPostImage(targetPermissions, data, platform) {
+export function canPostImage(targetPermissions, data, platform): boolean {
   return getPermissionLevel(data, platform) >= targetPermissions;
 }
 
-function getPermissionLevel(data, platform) {
+function getPermissionLevel(data, platform): number {
   switch (platform) {
-    case "twitch":
+    case PLATFORMS.twitch:
       const role = data.message.role ?? 0;
       const isSub = data.message.subscriber;
 
-      if (role >= 4) return 40;
-      if (role >= 3) return 30;
-      if (role >= 2) return 20;
-      if (isSub) return 15;
-      return 10;
-    case "youtube":
+      if (role >= 4) return PERMISSION_LEVELS.owner;
+      if (role >= 3) return PERMISSION_LEVELS.mod;
+      if (role >= 2) return PERMISSION_LEVELS.vip;
+      if (isSub) return PERMISSION_LEVELS.sub;
+      return PERMISSION_LEVELS.default;
+    case PLATFORMS.youTube:
       const { isOwner, isModerator, isSponsor } = data.user;
 
-      if (isOwner) return 40;
-      if (isModerator) return 30;
-      if (isSponsor) return 15;
-      return 10;
+      if (isOwner) return PERMISSION_LEVELS.owner;
+      if (isModerator) return PERMISSION_LEVELS.mod;
+      if (isSponsor) return PERMISSION_LEVELS.sub;
+      return PERMISSION_LEVELS.default;
   }
 }

@@ -9,8 +9,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "typecheck": "tsc --noEmit",
-    "compile": "npm run typecheck && esbuild src/main.ts --bundle --outfile=dist/bundle.js",
-    "build": "tsc"
+    "build": "npm run typecheck && esbuild src/main.ts --bundle --outfile=dist/bundle.js",
+    "dev": "tsc"
   },
   "repository": {
     "type": "git",

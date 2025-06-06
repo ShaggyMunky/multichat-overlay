@@ -1,7 +1,7 @@
 import { options } from "./config/config.js";
 import { startStreamerbotClient } from "./config/streamerBotClient.js";
 import { runTwitchOptions } from "./platforms/twitch.js";
-import { setBaseMarkup } from "./helpers/domManager.js";
+import { setBaseMarkup } from "./helpers/optionActions.js";
 
 startStreamerbotClient();
 setBaseMarkup();

@@ -1,33 +1,16 @@
 import { ignoreUserList, options } from "../config/config.js";
 import { client } from "../config/streamerBotClient.js";
-import {
-  setPronouns,
-  setTimestamp,
-  setUserName,
-} from "../helpers/optionActions.js";
-import {
-  addMessageItem,
-  setBgAndOpacity,
-  messageList,
-} from "../helpers/domManager.js";
-import {
-  canPostImage,
-  escapeRegExp,
-  getCurrentTimeFormatted,
-  isImageUrl,
-} from "../helpers/utils.js";
-import {
-  cloneFromTemplate,
-  getMessageInstanceElements,
-  getCardInstanceElements,
-} from "../helpers/templateHandler.js";
+import * as domManager from "../helpers/domManager.js";
+import * as optionActions from "../helpers/optionActions.js";
 
-const avatarMap = new Map();
+import { MessageInstance } from "../types/templateTypes.js";
+import { PLATFORMS } from "../config/constants.js";
 
 export function runTwitchOptions(): void {
   if (options.showTwitchMessages) {
     client.on("Twitch.ChatMessage", (response) => {
       console.debug(response.data);
+      console.log(response);
       twitchChatMessage(response.data);
     });
 
@@ -112,179 +95,67 @@ async function twitchChatMessage(data): Promise<void> {
   // Don't post messages from users from the ignore list
   if (ignoreUserList.includes(data.message.username.toLowerCase())) return;
 
-  const instance = cloneFromTemplate("messageTemplate");
-  const elements = getMessageInstanceElements(instance);
+  const instance = domManager.cloneFromTemplate("messageTemplate");
+  const elements = domManager.getMessageInstanceElements(instance);
+  const message = data.message.message;
 
   // puts background per message instead of a universsal box
-  if (!options.useSharedBg) {
-    setBgAndOpacity(elements.messageContainer);
-  }
+  if (!options.useSharedBg)
+    optionActions.setBgAndOpacity(elements.messageContainer);
 
-  // Set First Time Chatter
-  if (data.message.firstMessage && options.showMessage) {
-    elements.firstMessage.style.display = "block";
-    elements.messageContainer.classList.add("highlightMessage");
-  }
-
-  // Set Shared Chat
-  if (data.isSharedChat) {
-    if (options.showTwitchSharedChat > 1) {
-      if (!data.sharedChat.primarySource) {
-        const sharedChatChannel = data.sharedChat.sourceRoom.name;
-        elements.sharedChat.style.display = "block";
-        elements.sharedChatChannel.innerHTML = `💬 ${sharedChatChannel}`;
-        elements.messageContainer.classList.add("highlightMessage");
-      }
-    } else if (
-      !data.sharedChat.primarySource &&
-      options.showTwitchSharedChat == 0
-    )
-      return;
-  }
-
-  // Set Reply Message
-  if (data.message.isReply && options.showMessage) {
-    const replyUser = data.message.reply.userName;
-    const replyMsg = data.message.reply.msgBody;
-
-    elements.reply.style.display = "block";
-    elements.replyUser.innerText = replyUser;
-    elements.replyMsg.innerText = replyMsg;
-  }
-
-  setTimestamp(elements.timestamp, options.showTimestamps);
-  setUserName(elements.username, options.showUsername, data);
-
-  if (options.showPronouns) {
-    await setPronouns(elements.pronouns, data.message.username);
-  }
-
-  // Set the message data
-  let message = data.message.message;
-  const messageColor = data.message.color;
-
-  // Set message text
   if (options.showMessage) {
+    if (data.message.firstMessage) optionActions.setFirstTimeChatter(elements);
+    if (!continueAfterHandleSharedChat(elements, data)) return;
+    optionActions.setReplyMessage(elements, data);
     elements.message.innerText = message;
   }
 
+  optionActions.setTimestamp(elements.timestamp);
+  optionActions.setUserName(elements.username, data);
+
+  await optionActions.setPronouns(elements.pronouns, data.message.username);
+
   // Set the "action" color
-  if (data.message.isMe) elements.message.style.color = messageColor;
+  if (data.message.isMe) elements.message.style.color = data.message.color;
 
-  // Remove the line break
-  if (options.inlineChat) {
-    elements.colonSeparator.style.display = `inline`;
-    elements.lineSpace.style.display = `none`;
-  }
+  optionActions.setLineBreak(elements);
+  optionActions.renderPlatform(elements.platform, PLATFORMS.twitch);
+  optionActions.renderBadges(elements.badgeList, data.message.badges);
+  optionActions.renderEmotes(elements.message, data.emotes, PLATFORMS.twitch);
+  optionActions.renderCheermotes(elements.message, data.message.cheerEmotes);
 
-  // Render platform
-  if (options.showPlatform) {
-    const platformElements = `<img src="icons/platforms/twitch.png" class="platform"/>`;
-    elements.platform.innerHTML = platformElements;
-  }
+  await optionActions.renderAvatar(
+    elements.avatar,
+    data.message.username,
+    PLATFORMS.twitch
+  );
 
-  // Render badges
-  if (options.showBadges) {
-    elements.badgeList.innerHTML = "";
-    for (const badgeData of data.message.badges) {
-      const badge = new Image();
-      badge.src = badgeData.imageUrl;
-      badge.classList.add("badge");
-      elements.badgeList.appendChild(badge);
-    }
-  }
+  optionActions.groupConsecutiveMessages(
+    elements.userInfo,
+    data.user.id,
+    PLATFORMS.twitch
+  );
 
-  // Render emotes
-  for (const emoteData of data.emotes) {
-    const emoteElement = `<img src="${emoteData.imageUrl}" class="emote"/>`;
-    const emoteName = escapeRegExp(emoteData.name);
+  await optionActions.embedImage(
+    elements.message,
+    message,
+    data,
+    PLATFORMS.twitch
+  );
 
-    let regexPattern = emoteName;
-
-    // Check if the emote name consists only of word characters (alphanumeric and underscore)
-    if (/^\w+$/.test(emoteName)) {
-      regexPattern = `\\b${emoteName}\\b`;
-    } else {
-      // For non-word emotes, ensure they are surrounded by non-word characters or boundaries
-      regexPattern = `(?:^|[^\\w])${emoteName}(?:$|[^\\w])`;
-    }
-
-    const regex = new RegExp(regexPattern, "g");
-    elements.message.innerHTML = elements.message.innerHTML.replace(
-      regex,
-      emoteElement
-    );
-  }
-
-  // Render cheermotes
-  for (const cheerData of data.message.cheerEmotes) {
-    const bits = cheerData.bits;
-    const imageUrl = cheerData.imageUrl;
-    const name = cheerData.name;
-    const cheerEmoteElement = `<img src="${imageUrl}" class="emote"/>`;
-    const bitsElements = `<span class="bits">${bits}</span>`;
-    elements.message.innerHTML = elements.message.innerHTML.replace(
-      new RegExp(`\\b${name}${bits}\\b`, "i"),
-      cheerEmoteElement + bitsElements
-    );
-  }
-
-  // Render avatars
-  if (options.showAvatar) {
-    const username = data.message.username;
-    const avatarURL = await getAvatar(username);
-    const avatar = new Image();
-    avatar.src = avatarURL;
-    avatar.classList.add("avatar");
-    elements.avatar.appendChild(avatar);
-  }
-
-  // Hide the header if the same username sends a message twice in a row
-  // EXCEPT when the scroll direction is set to reverse (scrollDirection == 2)
-  if (
-    options.groupConsecutiveMessages &&
-    messageList.children.length > 0 &&
-    options.scrollDirection != 2
-  ) {
-    const msgItem = messageList.lastChild as HTMLElement;
-    const lastPlatform = msgItem.dataset.platform;
-    const lastUserId = msgItem.dataset.userId;
-    if (lastPlatform == "twitch" && lastUserId == data.user.id)
-      elements.userInfo.style.display = "none";
-  }
-
-  // Embed image
-  if (
-    canPostImage(options.imageEmbedPermissionLevel, data, "twitch") &&
-    isImageUrl(message)
-  ) {
-    const image = new Image();
-
-    image.onload = function () {
-      image.style.padding = "20px 0px";
-      image.style.width = "100%";
-      elements.message.innerHTML = "";
-      elements.message.appendChild(image);
-
-      addMessageItem(instance, data.message.msgId, "twitch", data.user.id);
-    };
-
-    const urlObj = new URL(message);
-    urlObj.search = "";
-    urlObj.hash = "";
-
-    image.src =
-      "https://external-content.duckduckgo.com/iu/?u=" + urlObj.toString();
-  } else {
-    addMessageItem(instance, data.message.msgId, "twitch", data.user.id);
-  }
+  domManager.addMessageItem(
+    instance,
+    data.message.msgId,
+    PLATFORMS.twitch,
+    data.user.id
+  );
 }
 
-async function twitchAutomaticRewardRedemption(data) {
+async function twitchAutomaticRewardRedemption(data): Promise<void> {
   if (data.reward_type != "gigantify_an_emote") return;
 
-  const instance = cloneFromTemplate("messageTemplate");
-  const elements = getMessageInstanceElements(instance);
+  const instance = domManager.cloneFromTemplate("messageTemplate");
+  const elements = domManager.getMessageInstanceElements(instance);
 
   elements.userInfo.style.display = "none";
 
@@ -300,12 +171,12 @@ async function twitchAutomaticRewardRedemption(data) {
     elements.message.appendChild(image);
   };
 
-  addMessageItem(instance, data.id);
+  domManager.addMessageItem(instance, data.id);
 }
 
-async function twitchAnnouncement(data) {
-  const instance = cloneFromTemplate("cardTemplate");
-  const cardElements = getCardInstanceElements(instance);
+async function twitchAnnouncement(data): Promise<void> {
+  const instance = domManager.cloneFromTemplate("cardTemplate");
+  const cardElements = domManager.getCardInstanceElements(instance);
 
   // Set the card background colors
   switch (data.announcementColor) {
@@ -327,84 +198,46 @@ async function twitchAnnouncement(data) {
   cardElements.icon.innerText = "📢";
   cardElements.title.innerText = "Announcement";
 
-  const msgInstance = cloneFromTemplate("messageTemplate");
-  const msgElements = getMessageInstanceElements(msgInstance);
+  const msgInstance = domManager.cloneFromTemplate("messageTemplate");
+  const msgElements = domManager.getMessageInstanceElements(msgInstance);
 
-  // Set timestamp
-  if (options.showTimestamps) {
-    msgElements.timestamp.classList.add("timestamp");
-    msgElements.timestamp.innerText = getCurrentTimeFormatted();
-  }
+  optionActions.setTimestamp(msgElements.timestamp);
+
   msgElements.username.innerText = data.user.name;
   msgElements.username.style.color = data.user.color;
   msgElements.message.innerText = data.text;
 
-  // Remove the line break
-  msgElements.colonSeparator.style.display = `inline`;
-  msgElements.lineSpace.style.display = `none`;
+  optionActions.setLineBreak(msgElements);
 
-  // Render platform
+  // hide platform
   msgElements.platform.style.display = `none`;
 
-  // Render badges
-  msgElements.badgeList.innerHTML = "";
-  for (const badgeData of data.user.badges) {
-    const badge = new Image();
-    badge.src = badgeData.imageUrl;
-    badge.classList.add("badge");
-    msgElements.badgeList.appendChild(badge);
-  }
+  optionActions.renderBadges(msgElements.badgeList, data.user.badges);
 
-  if (options.showPronouns) {
-    await setPronouns(msgElements.pronouns, data.user.login);
-  }
+  await optionActions.setPronouns(msgElements.pronouns, data.user.login);
 
-  // Render emotes
-  for (const partData of data.parts) {
-    if (partData.type == `emote`) {
-      const emoteElement = `<img src="${partData.imageUrl}" class="emote"/>`;
-      const emoteName = escapeRegExp(partData.text);
-
-      let regexPattern = emoteName;
-
-      // Check if the emote name consists only of word characters (alphanumeric and underscore)
-      if (/^\w+$/.test(emoteName)) {
-        regexPattern = `\\b${emoteName}\\b`;
-      } else {
-        // For non-word emotes, ensure they are surrounded by non-word characters or boundaries
-        regexPattern = `(?:^|[^\\w])${emoteName}(?:$|[^\\w])`;
-      }
-
-      const regex = new RegExp(regexPattern, "g");
-      msgElements.message.innerHTML = msgElements.message.innerHTML.replace(
-        regex,
-        emoteElement
-      );
-    }
-  }
+  optionActions.renderEmotes(
+    msgElements.message,
+    data.parts,
+    PLATFORMS.twitch,
+    "emote"
+  );
 
   // Insert the modified template instance into the DOM
   cardElements.content.appendChild(msgInstance);
 
-  addMessageItem(instance, data.messageId);
+  domManager.addMessageItem(instance, data.messageId);
 }
 
-async function twitchSub(data) {
-  const instance = cloneFromTemplate("cardTemplate");
-  const elements = getCardInstanceElements(instance);
+async function twitchSub(data): Promise<void> {
+  const instance = domManager.cloneFromTemplate("cardTemplate");
+  const elements = domManager.getCardInstanceElements(instance);
 
   // Set the card background colors
   elements.card.classList.add("twitch");
 
   // Set the card header
-  for (const badgeData of data.user.badges) {
-    if (badgeData.name == "subscriber") {
-      const badge = new Image();
-      badge.src = badgeData.imageUrl;
-      badge.classList.add("badge");
-      elements.icon.appendChild(badge);
-    }
-  }
+  setSubBadge(elements.icon, data.user.badges);
 
   // Set the text
   const username = data.user.name;
@@ -417,25 +250,18 @@ async function twitchSub(data) {
     )}`;
   else elements.title.innerText = `${username} used their Prime Sub`;
 
-  addMessageItem(instance, data.messageId);
+  domManager.addMessageItem(instance, data.messageId);
 }
 
-async function twitchResub(data) {
-  const instance = cloneFromTemplate("cardTemplate");
-  const elements = getCardInstanceElements(instance);
+async function twitchResub(data): Promise<void> {
+  const instance = domManager.cloneFromTemplate("cardTemplate");
+  const elements = domManager.getCardInstanceElements(instance);
 
   // Set the card background colors
   elements.card.classList.add("twitch");
 
   // Set the card header
-  for (const badgeData of data.user.badges) {
-    if (badgeData.name == "subscriber") {
-      const badge = new Image();
-      badge.src = badgeData.imageUrl;
-      badge.classList.add("badge");
-      elements.icon.appendChild(badge);
-    }
-  }
+  setSubBadge(elements.icon, data.user.badges);
 
   // Set the text
   const username = data.user.name;
@@ -452,25 +278,18 @@ async function twitchResub(data) {
     elements.title.innerText = `${username} used their Prime Sub (${cumulativeMonths} months)`;
   elements.content.innerText = `${message}`;
 
-  addMessageItem(instance, data.messageId);
+  domManager.addMessageItem(instance, data.messageId);
 }
 
-async function twitchGiftSub(data) {
-  const instance = cloneFromTemplate("cardTemplate");
-  const elements = getCardInstanceElements(instance);
+async function twitchGiftSub(data): Promise<void> {
+  const instance = domManager.cloneFromTemplate("cardTemplate");
+  const elements = domManager.getCardInstanceElements(instance);
 
   // Set the card background colors
   elements.card.classList.add("twitch");
 
   // Set the card header
-  for (const badgeData of data.user.badges) {
-    if (badgeData.name == "subscriber") {
-      const badge = new Image();
-      badge.src = badgeData.imageUrl;
-      badge.classList.add("badge");
-      elements.icon.appendChild(badge);
-    }
-  }
+  setSubBadge(elements.icon, data.user.badges);
 
   // Set the text
   const username = data.user.name;
@@ -481,70 +300,56 @@ async function twitchGiftSub(data) {
   elements.title.innerText = `${username} gifted a Tier ${subTier.charAt(
     0
   )} subscription to ${recipient}`;
+
   if (cumlativeTotal > 0)
     elements.content.innerText = `They've gifted ${cumlativeTotal} subs in total!`;
 
-  addMessageItem(instance, data.messageId);
+  domManager.addMessageItem(instance, data.messageId);
 }
 
-async function twitchRewardRedemption(data) {
-  const instance = cloneFromTemplate("cardTemplate");
-  const elements = getCardInstanceElements(instance);
-
-  // Set the card background colors
-  elements.card.classList.add("twitch");
-
-  if (options.showAvatar) {
-    // Render avatars
-    const username = data.user_login;
-    const avatarURL = await getAvatar(username);
-    const avatar = new Image();
-    avatar.src = avatarURL;
-    avatar.classList.add("avatar");
-    elements.avatar.appendChild(avatar);
-  }
-
-  // Set the text
+async function twitchRewardRedemption(data): Promise<void> {
+  const instance = domManager.cloneFromTemplate("cardTemplate");
+  const elements = domManager.getCardInstanceElements(instance);
   const username = data.user_name;
   const rewardName = data.reward.title;
   const cost = data.reward.cost;
   const userInput = data.user_input;
   const channelPointIcon = `<img src="icons/badges/twitch-channel-point.png" class="platform"/>`;
 
+  // Set the card background colors
+  elements.card.classList.add("twitch");
+
+  optionActions.renderAvatar(
+    elements.avatar,
+    data.user_login,
+    PLATFORMS.twitch
+  );
+
   elements.title.innerHTML = `${username} redeemed ${rewardName} ${channelPointIcon} ${cost}`;
   elements.content.innerText = `${userInput}`;
 
-  addMessageItem(instance, data.messageId);
+  domManager.addMessageItem(instance, data.messageId);
 }
 
-async function twitchRaid(data) {
-  const instance = cloneFromTemplate("cardTemplate");
-  const elements = getCardInstanceElements(instance);
+async function twitchRaid(data): Promise<void> {
+  const instance = domManager.cloneFromTemplate("cardTemplate");
+  const elements = domManager.getCardInstanceElements(instance);
+  const username = data.from_broadcaster_user_login;
+  const viewers = data.viewers;
 
   // Set the card background colors
   elements.card.classList.add("twitch");
 
-  if (options.showAvatar) {
-    // Render avatars
-    const username = data.from_broadcaster_user_login;
-    const avatarURL = await getAvatar(username);
-    const avatar = new Image();
-    avatar.src = avatarURL;
-    avatar.classList.add("avatar");
-    elements.avatar.appendChild(avatar);
-  }
+  optionActions.renderAvatar(elements.avatar, username, PLATFORMS.twitch);
 
   // Set the text
-  const username = data.from_broadcaster_user_login;
-  const viewers = data.viewers;
-
   elements.title.innerText = `${username} is raiding`;
   elements.content.innerText = `with a party of ${viewers}`;
 
-  addMessageItem(instance, data.messageId);
+  domManager.addMessageItem(instance, data.messageId);
 }
 
-function twitchChatMessageDeleted(data) {
+function twitchChatMessageDeleted(data): void {
   // Maintain a list of chat messages to delete
   const messagesToRemove = [];
 
@@ -552,9 +357,9 @@ function twitchChatMessageDeleted(data) {
   const messageId = data.messageId;
 
   // Find the items to remove
-  for (let i = 0; i < messageList.children.length; i++) {
-    if (messageList.children[i].id === messageId) {
-      messagesToRemove.push(messageList.children[i]);
+  for (let i = 0; i < domManager.messageList.children.length; i++) {
+    if (domManager.messageList.children[i].id === messageId) {
+      messagesToRemove.push(domManager.messageList.children[i]);
     }
   }
 
@@ -563,12 +368,12 @@ function twitchChatMessageDeleted(data) {
     item.style.opacity = 0;
     item.style.height = 0;
     setTimeout(function () {
-      messageList.removeChild(item);
+      domManager.messageList.removeChild(item);
     }, 1000);
   });
 }
 
-function twitchUserBanned(data) {
+function twitchUserBanned(data): void {
   // Maintain a list of chat messages to delete
   const messagesToRemove = [];
 
@@ -576,8 +381,8 @@ function twitchUserBanned(data) {
   const userId = data.user_id;
 
   // Find the items to remove
-  for (let i = 0; i < messageList.children.length; i++) {
-    const child = messageList.children[i] as HTMLElement;
+  for (let i = 0; i < domManager.messageList.children.length; i++) {
+    const child = domManager.messageList.children[i] as HTMLElement;
     if (child.dataset.userId === userId) {
       messagesToRemove.push(child);
     }
@@ -585,25 +390,44 @@ function twitchUserBanned(data) {
 
   // Remove the items
   messagesToRemove.forEach((item) => {
-    messageList.removeChild(item);
+    domManager.messageList.removeChild(item);
   });
 }
 
-function twitchChatCleared(data) {
-  while (messageList.firstChild) {
-    messageList.removeChild(messageList.firstChild);
+function twitchChatCleared(data): void {
+  while (domManager.messageList.firstChild) {
+    domManager.messageList.removeChild(domManager.messageList.firstChild);
   }
 }
 
-async function getAvatar(username) {
-  if (avatarMap.has(username)) {
-    console.debug(`Avatar found for ${username}. Retrieving from hash map.`);
-    return avatarMap.get(username);
-  } else {
-    console.debug(`No avatar found for ${username}. Retrieving from Decapi.`);
-    let response = await fetch("https://decapi.me/twitch/avatar/" + username);
-    let data = await response.text();
-    avatarMap.set(username, data);
-    return data;
+function continueAfterHandleSharedChat(
+  elements: MessageInstance,
+  data: any
+): boolean {
+  if (data.isSharedChat) {
+    const isPrimary = data.sharedChat?.primarySource;
+    const showLevel = options.showTwitchSharedChat;
+
+    if (showLevel > 1 && !isPrimary) {
+      const sharedChatChannel = data.sharedChat.sourceRoom.name;
+      elements.sharedChat.style.display = "block";
+      elements.sharedChatChannel.innerHTML = `💬 ${sharedChatChannel}`;
+      elements.messageContainer.classList.add("highlightMessage");
+    } else if (!isPrimary && showLevel === 0) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function setSubBadge(element: HTMLElement, badges: any[]): void {
+  for (const badgeData of badges) {
+    if (badgeData.name == "subscriber") {
+      const badge = new Image();
+      badge.src = badgeData.imageUrl;
+      badge.classList.add("badge");
+      element.appendChild(badge);
+    }
   }
 }
