@@ -1,8 +1,11 @@
-/////////////////////////
-// STREAMER.BOT CLIENT //
-/////////////////////////
+import { client } from "../config/streamerBotClient.js";
+import {
+  addMessageItem,
+  cloneFromTemplate,
+  getCardInstanceElements,
+} from "../helpers/domManager.js";
 
-if (options.showTipeeeStreamDonations) {
+export function runTipeeeOptions(): void {
   client.on("TipeeeStream.Donation", (response) => {
     console.debug(response.data);
     tipeeeStreamDonation(response.data);

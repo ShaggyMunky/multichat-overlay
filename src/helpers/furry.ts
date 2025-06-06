@@ -1,15 +1,4 @@
-async function twitchChatMessage(data) {
-  // Set furry mode
-  if (options.furryMode) message = translateToFurry(message);
-}
-
-function youTubeMessage(data) {
-  // Set furry mode
-  if (options.furryMode)
-    elements.message.innerText = translateToFurry(data.message);
-}
-
-function translateToFurry(sentence) {
+export function translateToFurry(sentence) {
   const words = sentence.toLowerCase().split(/\b/);
 
   const furryWords = words.map((word) => {

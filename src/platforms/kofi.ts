@@ -1,8 +1,11 @@
-/////////////////////////
-// STREAMER.BOT CLIENT //
-/////////////////////////
+import { client } from "../config/streamerBotClient.js";
+import {
+  addMessageItem,
+  cloneFromTemplate,
+  getCardInstanceElements,
+} from "../helpers/domManager.js";
 
-if (options.showKofiDonations) {
+export function runKofiOptions(): void {
   client.on("Kofi.Donation", (response) => {
     console.debug(response.data);
     kofiDonation(response.data);

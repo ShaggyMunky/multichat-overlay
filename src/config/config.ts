@@ -7,6 +7,8 @@ import {
 const urlParams = new URLSearchParams(window.location.search);
 
 const paramConfig = {
+  address: { type: "string", default: "127.0.0.1" },
+  port: { type: "string", default: "8081" },
   showPlatform: { type: "bool", default: true },
   showAvatar: { type: "bool", default: false },
   showTimestamps: { type: "bool", default: false },
@@ -85,8 +87,8 @@ function getOptions<
 }
 
 export const options = getOptions(paramConfig);
-export const serverAddress = urlParams.get("address") || "127.0.0.1";
-export const serverPort = urlParams.get("port") || "8081";
+export const serverAddress = options.address;
+export const serverPort = options.port;
 export const ignoreUserList =
   options.ignoreChatters.split(",").map((item) => item.trim().toLowerCase()) ||
   [];

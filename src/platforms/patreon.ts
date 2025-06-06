@@ -1,8 +1,11 @@
-/////////////////////////
-// STREAMER.BOT CLIENT //
-/////////////////////////
+import { client } from "../config/streamerBotClient.js";
+import {
+  addMessageItem,
+  cloneFromTemplate,
+  getCardInstanceElements,
+} from "../helpers/domManager.js";
 
-if (options.showPatreonMemberships) {
+export function runPatreonOptions(): void {
   client.on("Patreon.PledgeCreated", (response) => {
     console.debug(response.data);
     patreonPledgeCreated(response.data);

@@ -1,8 +1,11 @@
-/////////////////////////
-// STREAMER.BOT CLIENT //
-/////////////////////////
+import { client } from "../config/streamerBotClient.js";
+import {
+  addMessageItem,
+  cloneFromTemplate,
+  getCardInstanceElements,
+} from "../helpers/domManager.js";
 
-if (options.showStreamlabsDonations) {
+export function runStreamlabsOptions(): void {
   client.on("Streamlabs.Donation", (response) => {
     console.debug(response.data);
     streamlabsDonation(response.data);
@@ -29,5 +32,5 @@ async function streamlabsDonation(data) {
   elements.title.innerText = `🪙 ${donater} donated ${currency}${formattedAmount}`;
   elements.content.innerText = `${message}`;
 
-  addMessageItem(instance);
+  addMessageItem(instance, data.id);
 }

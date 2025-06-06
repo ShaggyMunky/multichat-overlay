@@ -1,8 +1,11 @@
-/////////////////////////
-// STREAMER.BOT CLIENT //
-/////////////////////////
+import { client } from "../config/streamerBotClient.js";
+import {
+  addMessageItem,
+  cloneFromTemplate,
+  getCardInstanceElements,
+} from "../helpers/domManager.js";
 
-if (options.showFourthwallAlerts) {
+export function runFourthWallOptions(): void {
   client.on("Fourthwall.OrderPlaced", (response) => {
     console.debug(response.data);
     fourthwallOrderPlaced(response.data);
@@ -25,7 +28,7 @@ if (options.showFourthwallAlerts) {
 
   client.on("Fourthwall.GiftDrawStarted", (response) => {
     console.debug(response.data);
-    FourthwallGiftDrawStarted(response.data);
+    fourthwallGiftDrawStarted(response.data);
   });
 
   client.on("Fourthwall.GiftDrawEnded", (response) => {

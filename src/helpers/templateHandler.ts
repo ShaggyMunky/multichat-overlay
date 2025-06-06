@@ -58,7 +58,7 @@ export function getStickerInstanceElements(
     youtubeSuperSticker: instance.querySelector(
       "#youtubeSuperSticker"
     ) as HTMLElement,
-    stickerImg: instance.querySelector("#stickerImg") as HTMLElement,
+    stickerImg: instance.querySelector("#stickerImg") as HTMLImageElement,
     stickerLabel: instance.querySelector("#stickerLabel") as HTMLElement,
   };
 }

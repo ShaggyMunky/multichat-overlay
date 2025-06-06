@@ -1,4 +1,6 @@
 const paramConfig = {
+  address: { type: "string", default: "127.0.0.1" },
+  port: { type: "string", default: "8080" },
   showPlatform: { type: "bool", default: true },
   showAvatar: { type: "bool", default: true },
   showTimestamps: { type: "bool", default: true },
@@ -11,6 +13,7 @@ const paramConfig = {
   lineSpacing: { type: "string", default: "1.7" },
   background: { type: "string", default: "#000000" },
   opacity: { type: "string", default: "0.85" },
+  useSharedBg: { type: "bool", default: true },
   hideAfter: { type: "int", default: 0 },
   excludeCommands: { type: "bool", default: true },
   ignoreChatters: { type: "string", default: "" },

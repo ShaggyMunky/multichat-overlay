@@ -1,8 +1,11 @@
-/////////////////////////
-// STREAMER.BOT CLIENT //
-/////////////////////////
+import { client } from "../config/streamerBotClient.js";
+import {
+  addMessageItem,
+  cloneFromTemplate,
+  getCardInstanceElements,
+} from "../helpers/domManager.js";
 
-if (options.showStreamElementsTips) {
+export function runStreamElementsOptions(): void {
   client.on("StreamElements.Tip", (response) => {
     console.debug(response.data);
     streamElementsTip(response.data);

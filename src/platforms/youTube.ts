@@ -2,6 +2,7 @@ import { ignoreUserList, options } from "../config/config.js";
 import { PLATFORMS } from "../config/constants.js";
 import { client } from "../config/streamerBotClient.js";
 import * as domManager from "../helpers/domManager.js";
+import { translateToFurry } from "../helpers/furry.js";
 import * as optionActions from "../helpers/optionActions.js";
 
 const membersMap = new Map();
@@ -75,7 +76,9 @@ async function youTubeMessage(data) {
   );
 
   if (options.showMessage) {
-    elements.message.innerText = data.message;
+    elements.message.innerText = !options.furryMode
+      ? data.message
+      : translateToFurry(data.message);
   }
 
   optionActions.setLineBreak(elements);

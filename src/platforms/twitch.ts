@@ -5,12 +5,12 @@ import * as optionActions from "../helpers/optionActions.js";
 
 import { MessageInstance } from "../types/templateTypes.js";
 import { PLATFORMS } from "../config/constants.js";
+import { translateToFurry } from "../helpers/furry.js";
 
 export function runTwitchOptions(): void {
   if (options.showTwitchMessages) {
     client.on("Twitch.ChatMessage", (response) => {
       console.debug(response.data);
-      console.log(response);
       twitchChatMessage(response.data);
     });
 
@@ -107,7 +107,9 @@ async function twitchChatMessage(data): Promise<void> {
     if (data.message.firstMessage) optionActions.setFirstTimeChatter(elements);
     if (!continueAfterHandleSharedChat(elements, data)) return;
     optionActions.setReplyMessage(elements, data);
-    elements.message.innerText = message;
+    elements.message.innerText = !options.furryMode
+      ? message
+      : translateToFurry(data.message);
   }
 
   optionActions.setTimestamp(elements.timestamp);
