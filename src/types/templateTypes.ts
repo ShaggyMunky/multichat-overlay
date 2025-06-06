@@ -30,6 +30,6 @@ export type CardInstance = {
 export type StickerInstance = {
   sticker: HTMLElement;
   youtubeSuperSticker: HTMLElement;
-  stickerImg: HTMLElement;
+  stickerImg: HTMLImageElement;
   stickerLabel: HTMLElement;
 };

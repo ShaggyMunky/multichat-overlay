@@ -111,7 +111,11 @@ async function twitchChatMessage(data): Promise<void> {
   }
 
   optionActions.setTimestamp(elements.timestamp);
-  optionActions.setUserName(elements.username, data);
+  optionActions.setUserName(
+    elements.username,
+    data.message.displayName,
+    data.message.color
+  );
 
   await optionActions.setPronouns(elements.pronouns, data.message.username);
 
@@ -120,7 +124,11 @@ async function twitchChatMessage(data): Promise<void> {
 
   optionActions.setLineBreak(elements);
   optionActions.renderPlatform(elements.platform, PLATFORMS.twitch);
-  optionActions.renderBadges(elements.badgeList, data.message.badges);
+  optionActions.renderBadges(
+    elements.badgeList,
+    data.message.badges,
+    PLATFORMS.twitch
+  );
   optionActions.renderEmotes(elements.message, data.emotes, PLATFORMS.twitch);
   optionActions.renderCheermotes(elements.message, data.message.cheerEmotes);
 
@@ -212,7 +220,11 @@ async function twitchAnnouncement(data): Promise<void> {
   // hide platform
   msgElements.platform.style.display = `none`;
 
-  optionActions.renderBadges(msgElements.badgeList, data.user.badges);
+  optionActions.renderBadges(
+    msgElements.badgeList,
+    data.user.badges,
+    PLATFORMS.twitch
+  );
 
   await optionActions.setPronouns(msgElements.pronouns, data.user.login);
 

@@ -82,10 +82,14 @@ export function setTimestamp(element: HTMLElement): void {
 /**
  * Displays the user name if option is enabled
  */
-export function setUserName(element: HTMLElement, data: any): void {
+export function setUserName(
+  element: HTMLElement,
+  name: string,
+  color: string
+): void {
   if (options.showUsername) {
-    element.innerText = data.message.displayName;
-    element.style.color = data.message.color;
+    element.innerText = name;
+    element.style.color = color;
   }
 }
 
@@ -144,14 +148,36 @@ export function renderPlatform(element: HTMLElement, platform: string): void {
 /**
  * sets the user badges if option enabled
  */
-export function renderBadges(element: HTMLElement, badges: any[]): void {
+export function renderBadges(
+  element: HTMLElement,
+  badges: any[],
+  platform: string,
+  user?: any
+): void {
   if (options.showBadges) {
-    element.innerHTML = "";
-    for (const badgeData of badges) {
-      const badge = new Image();
-      badge.src = badgeData.imageUrl;
-      badge.classList.add("badge");
-      element.appendChild(badge);
+    switch (platform) {
+      case PLATFORMS.twitch:
+        element.innerHTML = "";
+        for (const badgeData of badges) {
+          const badge = new Image();
+          badge.src = badgeData.imageUrl;
+          badge.classList.add("badge");
+          element.appendChild(badge);
+        }
+        break;
+      case PLATFORMS.youTube:
+        for (const badgeType of badges) {
+          const key = `is${badgeType}`;
+          if (user[key]) {
+            const badge = new Image();
+            badge.src = `icons/badges/youtube-${badgeType.toLowerCase()}.svg`;
+            badge.style.filter = `invert(100%)`;
+            badge.style.opacity = "0.8";
+            badge.classList.add("badge");
+            element.appendChild(badge);
+          }
+        }
+        break;
     }
   }
 }

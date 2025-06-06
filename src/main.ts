@@ -1,6 +1,7 @@
 import { options } from "./config/config.js";
 import { startStreamerbotClient } from "./config/streamerBotClient.js";
 import { runTwitchOptions } from "./platforms/twitch.js";
+import { runYouTubeOptions } from "./platforms/youTube.js";
 import { setBaseMarkup } from "./helpers/optionActions.js";
 
 startStreamerbotClient();
@@ -17,4 +18,13 @@ if (
   options.showTwitchRaids
 ) {
   runTwitchOptions();
+}
+
+if (
+  options.showYouTubeMessages ||
+  options.showYouTubeSuperChats ||
+  options.showYouTubeSuperStickers ||
+  options.showYouTubeMemberships
+) {
+  runYouTubeOptions();
 }
