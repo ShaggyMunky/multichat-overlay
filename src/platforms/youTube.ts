@@ -1,5 +1,5 @@
 import { ignoreUserList, options } from "../config/config.js";
-import { PLATFORMS } from "../config/constants.js";
+import { PLATFORMS } from "../constants/platforms.js";
 import { client } from "../config/streamerBotClient.js";
 import * as domManager from "../helpers/domManager.js";
 import { translateToFurry } from "../helpers/furry.js";
@@ -22,6 +22,7 @@ export function runYouTubeOptions(): void {
   if (options.showYouTubeSuperChats) {
     client.on("YouTube.SuperChat", (response) => {
       console.debug(response.data);
+      console.log(response);
       youTubeSuperChat(response.data);
     });
   }

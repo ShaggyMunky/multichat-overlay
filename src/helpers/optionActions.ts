@@ -2,7 +2,8 @@ import { client } from "../config/streamerBotClient.js";
 import { options } from "../config/config.js";
 import * as utils from "./utils.js";
 import * as domManager from "./domManager.js";
-import { PLATFORMS, SCROLL_DIRECTION } from "../config/constants.js";
+import { PLATFORMS } from "../constants/platforms.js";
+import { SCROLL_DIRECTION } from "../constants/scrolling.js";
 import { MessageInstance } from "../types/templateTypes.js";
 
 const pronounMap = new Map();

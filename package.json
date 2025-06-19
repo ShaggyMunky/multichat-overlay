@@ -7,10 +7,11 @@
   "author": "",
   "license": "GPL-3.0",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "typecheck": "tsc --noEmit",
-    "build": "npm run typecheck && esbuild src/main.ts --bundle --outfile=dist/bundle.js",
-    "dev": "tsc"
+    "clean": "rimraf build",
+    "build": "npm run typecheck && esbuild src/main.ts --bundle --outfile=build/bundle.js",
+    "build:prod": "npm run typecheck && esbuild src/main.ts --bundle --minify --outfile=build/bundle.js",
+    "dev": "tsc --watch"
   },
   "repository": {
     "type": "git",

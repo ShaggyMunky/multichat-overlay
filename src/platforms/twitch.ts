@@ -4,7 +4,7 @@ import * as domManager from "../helpers/domManager.js";
 import * as optionActions from "../helpers/optionActions.js";
 
 import { MessageInstance } from "../types/templateTypes.js";
-import { PLATFORMS } from "../config/constants.js";
+import { PLATFORMS } from "../constants/platforms.js";
 import { translateToFurry } from "../helpers/furry.js";
 
 export function runTwitchOptions(): void {

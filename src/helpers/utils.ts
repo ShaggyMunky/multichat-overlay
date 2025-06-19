@@ -1,4 +1,5 @@
-import { PERMISSION_LEVELS, PLATFORMS } from "../config/constants.js";
+import { PERMISSION_LEVELS } from "../constants/permissions.js";
+import { PLATFORMS } from "../constants/platforms.js";
 
 export function getCurrentTimeFormatted(): string {
   const now = new Date();
